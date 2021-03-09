@@ -41,7 +41,7 @@
         /// <param name="mimeType">Mime type of the file being shared (Android only)</param>
         public void ShareScreenshotAndText(string shareText, string filePath, bool showShareDialogBox = true, string shareDialogBoxText = "Select App To Share With", string mimeType = "image/*")
         {
-            adapter.ShareScreenshotAndText(shareText, filePath, showShareDialogBox, shareDialogBoxText);
+            adapter.ShareScreenshotAndText(shareText, filePath, showShareDialogBox, shareDialogBoxText, mimeType);
         }
 
         /// <summary>
