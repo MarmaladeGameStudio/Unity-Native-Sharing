@@ -11,7 +11,7 @@ extern UIViewController* UnityGetGLViewController();
 #ifdef __cplusplus
 extern "C" {
 #endif
-    void UnityNative_Sharing_ShareTextAndScreenshot(const char* shareText, const char* sharePath);
+    void UnityNative_Sharing_ShareTextAndFile(const char* shareText, const char* filePath);
     void UnityNative_Sharing_ShareText(const char* shareText);
 #ifdef __cplusplus
 }

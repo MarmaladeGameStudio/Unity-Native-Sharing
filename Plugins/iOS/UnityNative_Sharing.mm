@@ -11,56 +11,76 @@
 //
 void UnityNative_Sharing_ShareText(const char* shareText)
 {
-    UnityNative_Sharing_ShareTextAndScreenshot(shareText, "");
+    UnityNative_Sharing_ShareTextAndFile(shareText, "");
 }
 
 //
-// Shares Screenshot and Text
+// Shares File and Text
 //
-void UnityNative_Sharing_ShareTextAndScreenshot(const char* shareText, const char* imagePath)
+void UnityNative_Sharing_ShareTextAndFile(const char* shareText, const char* filePath)
 {
-    NSString *textToShare = [NSString stringWithUTF8String:shareText];
-    NSString *pathToImage = [NSString stringWithUTF8String:imagePath];
-    
     NSMutableArray *items = [NSMutableArray new];
     
-	//Check to see if string is empty or null
-    if(textToShare != NULL && textToShare.length > 0) [items addObject:textToShare];
-    
-	//Check to see if string is empty or null
-    if(pathToImage != NULL && pathToImage.length > 0)
+    NSString *textToShare = [NSString stringWithUTF8String:shareText];
+    if(textToShare != NULL && textToShare.length > 0)
     {
-        NSFileManager *fileMgr = [NSFileManager defaultManager];
+        [items addObject:textToShare];
+    }
+    
+    NSString *pathToFile = [NSString stringWithUTF8String:filePath];
+    if(pathToFile != NULL && pathToFile.length > 0)
+    {
+        NSFileManager *fileManager = [NSFileManager defaultManager];
         
-		//Check to see if the file exists
-        if([fileMgr fileExistsAtPath:pathToImage])
+        // Check to see if the file exists
+        if([fileManager fileExistsAtPath:pathToFile])
         {
-            NSURL *formattedURL = [NSURL fileURLWithPath:pathToImage];
+            NSURL *formattedURL = [NSURL fileURLWithPath:pathToFile];
             [items addObject:formattedURL];
         }
-		//File not found
+        // File not found
         else
         {
-            NSString *message = [NSString stringWithFormat:@"Cannot find file %@", pathToImage];
+            NSString *message = [NSString stringWithFormat:@"Cannot find file %@", pathToFile];
             NSLog(@"%s", message.UTF8String);
         }
     }
     
-    UIActivityViewController *activity = [[UIActivityViewController alloc] initWithActivityItems:items applicationActivities:Nil];
-    [activity setValue:@"" forKey:@"subject"];
+    UIActivityViewController *activity = [[UIActivityViewController alloc] initWithActivityItems:items
+                                                                           applicationActivities:nil];
+    
+//    [activity setValue:@"" forKey:@"subject"]; // TODO be able to set a subject string here
+    
+    // Callback from iOS when the activity finishes
+    activity.completionWithItemsHandler = ^(UIActivityType activityType, BOOL completed, NSArray *returnedItems, NSError *activityError)
+    {
+        NSLog(@"Shared to %s", activityType.UTF8String);
+        
+        if(activityError)
+        {
+            NSLog(@"Error: [%@]", activityError);
+        }
+        
+        // TODO maybe a callback into Unity here?
+    };
     
     UIViewController *rootViewController = UnityGetGLViewController();
-
-    //iPhone share view
-    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone)
-    {
-      [rootViewController presentViewController:activity animated:YES completion:nil];
-    }
-    //iPad share view
-    else
-    {
-		//custom area to show the share popup
-        UIPopoverController *popup = [[UIPopoverController alloc] initWithContentViewController:activity];
-        [popup presentPopoverFromRect:CGRectMake(rootViewController.view.frame.size.width/2, rootViewController.view.frame.size.height/4, 0, 0)inView:rootViewController.view permittedArrowDirections:UIPopoverArrowDirectionAny animated:YES];
-    }
+    
+    CGSize screenSize = rootViewController.view.frame.size;
+    
+    // TODO make this confirgureable from C#
+    CGRect rect = CGRectMake(screenSize.width / 2,  // Width
+                             screenSize.height / 4, // Height
+                             0,                     // X
+                             0);                    // Y
+    
+    activity.modalPresentationStyle = UIModalPresentationPopover;
+    [rootViewController presentViewController:activity
+                                     animated:YES
+                                   completion:nil]; // Completion is invoked when the popup finishes animating in
+    
+    UIPopoverPresentationController *popup = activity.popoverPresentationController;
+    popup.sourceView = rootViewController.view;
+    popup.sourceRect = rect;
+    popup.permittedArrowDirections = UIPopoverArrowDirectionAny;
 }
